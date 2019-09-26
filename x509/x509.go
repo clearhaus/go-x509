@@ -20,6 +20,7 @@ import (
 	_ "crypto/sha1"
 	_ "crypto/sha256"
 	_ "crypto/sha512"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
@@ -978,6 +979,74 @@ func checkSignature(algo SignatureAlgorithm, signed, signature []byte, publicKey
 func (c *Certificate) CheckCRLSignature(crl *pkix.CertificateList) error {
 	algo := getSignatureAlgorithmFromAI(crl.SignatureAlgorithm)
 	return c.CheckSignature(algo, crl.TBSCertList.Raw, crl.SignatureValue.RightAlign())
+}
+
+func (c *Certificate) Tox509Certificate() (cert *x509.Certificate) {
+	cert = &x509.Certificate{
+		Raw:                     c.Raw,
+		RawTBSCertificate:       c.RawTBSCertificate,
+		RawSubjectPublicKeyInfo: c.RawSubjectPublicKeyInfo,
+		RawSubject:              c.RawSubject,
+		RawIssuer:               c.RawIssuer,
+
+		Signature:          c.Signature,
+		SignatureAlgorithm: x509.SignatureAlgorithm(c.SignatureAlgorithm),
+		PublicKey:          c.PublicKey,
+		PublicKeyAlgorithm: x509.PublicKeyAlgorithm(c.PublicKeyAlgorithm),
+
+		KeyUsage: x509.KeyUsage(c.KeyUsage),
+
+		Version:      c.Version,
+		SerialNumber: c.SerialNumber,
+		Issuer:       c.Issuer,
+		Subject:      c.Subject,
+		NotBefore:    c.NotBefore,
+		NotAfter:     c.NotAfter,
+
+		Extensions:      c.Extensions,
+		ExtraExtensions: c.ExtraExtensions,
+
+		UnhandledCriticalExtensions: c.UnhandledCriticalExtensions,
+
+		UnknownExtKeyUsage: c.UnknownExtKeyUsage,
+
+		BasicConstraintsValid: c.BasicConstraintsValid,
+		IsCA:                  c.IsCA,
+
+		MaxPathLen:     c.MaxPathLen,
+		MaxPathLenZero: c.MaxPathLenZero,
+
+		SubjectKeyId:   c.SubjectKeyId,
+		AuthorityKeyId: c.AuthorityKeyId,
+
+		OCSPServer:            c.OCSPServer,
+		IssuingCertificateURL: c.IssuingCertificateURL,
+
+		DNSNames:       c.DNSNames,
+		EmailAddresses: c.EmailAddresses,
+		IPAddresses:    c.IPAddresses,
+		URIs:           c.URIs,
+
+		PermittedDNSDomainsCritical: c.PermittedDNSDomainsCritical,
+		PermittedDNSDomains:         c.PermittedDNSDomains,
+		ExcludedDNSDomains:          c.ExcludedDNSDomains,
+		PermittedIPRanges:           c.PermittedIPRanges,
+		ExcludedIPRanges:            c.ExcludedIPRanges,
+		PermittedEmailAddresses:     c.PermittedEmailAddresses,
+		ExcludedEmailAddresses:      c.ExcludedEmailAddresses,
+		PermittedURIDomains:         c.PermittedURIDomains,
+		ExcludedURIDomains:          c.ExcludedURIDomains,
+
+		CRLDistributionPoints: c.CRLDistributionPoints,
+
+		PolicyIdentifiers: c.PolicyIdentifiers,
+	}
+
+	for _, v := range c.ExtKeyUsage {
+		cert.ExtKeyUsage = append(cert.ExtKeyUsage, x509.ExtKeyUsage(v))
+	}
+
+	return
 }
 
 type UnhandledCriticalExtension struct{}
